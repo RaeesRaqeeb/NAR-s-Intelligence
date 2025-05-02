@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h5 class="card-title">Total Users</h5>
+                <h2 id="totalUsers" class="card-text">0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h5 class="card-title">Active Tests</h5>
+                <h2 id="activeTests" class="card-text">0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <h5 class="card-title">Questions</h5>
+                <h2 id="totalQuestions" class="card-text">0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <h5 class="card-title">Avg. Score</h5>
+                <h2 id="avgScore" class="card-text">0%</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h4>User Management</h4>
+    </div>
+    <div class="card-body">
+        <div class="mb-3">
+            <input type="text" id="userSearch" class="form-control" placeholder="Search users...">
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <!-- Users will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+        <nav aria-label="User pagination">
+            <ul class="pagination justify-content-center" id="userPagination">
+                <!-- Pagination will be loaded here -->
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadDashboardStats();
+    await loadUsers(1);
+    
+    document.getElementById('userSearch').addEventListener('input', function() {
+        loadUsers(1);
+    });
+});
+
+async function loadDashboardStats() {
+    try {
+        const token = localStorage.getItem('access_token');
+        const response = await fetch('/admin/stats', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load dashboard stats');
+        
+        const data = await response.json();
+        document.getElementById('totalUsers').textContent = data.total_users;
+        document.getElementById('activeTests').textContent = data.active_tests;
+        document.getElementById('totalQuestions').textContent = data.total_questions;
+        document.getElementById('avgScore').textContent = `${data.avg_score}%`;
+    } catch (error) {
+        console.error('Error loading dashboard stats:', error);
+        alert(error.message);
+    }
+}
+
+async function loadUsers(page) {
+    try {
+        const token = localStorage.getItem('access_token');
+        const searchQuery = document.getElementById('userSearch').value;
+        const response = await fetch(`/admin/users?page=${page}&search=${encodeURIComponent(searchQuery)}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load users');
+        
+        const data = await response.json();
+        renderUsers(data.users);
+        renderPagination(data.total_pages, page);
+    } catch (error) {
+        console.error('Error loading users:', error);
+        alert(error.message);
+    }
+}
+
+function renderUsers(users) {
+    const tbody = document.getElementById('usersTableBody');
+    tbody.innerHTML = '';
+    
+    users.forEach(user => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${user.first_name} ${user.last_name}</td>
+            <td>${user.email}</td>
+            <td>${user.role}</td>
+            <td>
+                <span class="badge ${user.is_active ? 'bg-success' : 'bg-danger'}">
+                    ${user.is_active ? 'Active' : 'Inactive'}
+                </span>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="editUser('${user.id}')">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-${user.is_active ? 'danger' : 'success'}" 
+                    onclick="toggleUserStatus('${user.id}', ${user.is_active})">
+                    ${user.is_active ? 'Deactivate' : 'Activate'}
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function renderPagination(totalPages, currentPage) {
+    const pagination = document.getElementById('userPagination');
+    pagination.innerHTML = '';
+    
+    for (let i = 1; i <= totalPages; i++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        li.innerHTML = `<a class="page-link" href="#" onclick="loadUsers(${i})">${i}</a>`;
+        pagination.appendChild(li);
+    }
+}
+
+async function toggleUserStatus(userId, isActive) {
+    if (!confirm(`Are you sure you want to ${isActive ? 'deactivate' : 'activate'} this user?`)) return;
+    
+    try {
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`/admin/users/${userId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ is_active: !isActive })
+        });
+        
+        if (!response.ok) throw new Error('Failed to update user status');
+        
+        alert('User status updated successfully');
+        loadUsers(1); // Reload first page
+    } catch (error) {
+        console.error('Error updating user status:', error);
+        alert(error.message);
+    }
+}
+</script>
+{% endblock %}
