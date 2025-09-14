@@ -1,0 +1,1 @@
+Power shell: C:\ProgramData\Anaconda3\python.exe -m uvicorn main:app --reload

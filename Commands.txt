@@ -1,0 +1,7 @@
+After installing the required libraries/packages of python run this command on vs code terminal.
+Make sure all files are present on same folder
+
+command:
+
+uvicorn main:app --reload
+
