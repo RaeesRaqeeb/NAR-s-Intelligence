@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Admission Predictor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f7f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: #fff;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0px 4px 15px rgba(0,0,0,0.1);
+      width: 400px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #2c3e50;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 10px;
+      display: block;
+      color: #34495e;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    input:focus, select:focus {
+      border-color: #2980b9;
+      outline: none;
+    }
+    .btn {
+      background: #2980b9;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 20px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .btn:hover {
+      background: #1f6391;
+    }
+  </style>
+  <script>
+    function updateChoices() {
+      let allOptions = ["FAST", "NUST", "GIKI", "COMSAT", "UET"];
+      let choice1 = document.getElementById("choice1").value;
+      let choice2 = document.getElementById("choice2").value;
+      let choice3 = document.getElementById("choice3").value;
+      let selected = [choice1, choice2, choice3].filter(v => v !== "");
+
+      function updateSelect(selectId, currentValue) {
+        let select = document.getElementById(selectId);
+        select.innerHTML = "";
+
+        let opt = document.createElement("option");
+        opt.value = "";
+        opt.text = "Select University";
+        select.appendChild(opt);
+
+        allOptions.forEach(option => {
+          if (!selected.includes(option) || option === currentValue) {
+            let newOpt = document.createElement("option");
+            newOpt.value = option;
+            newOpt.text = option;
+            if (option === currentValue) newOpt.selected = true;
+            select.appendChild(newOpt);
+          }
+        });
+      }
+
+      updateSelect("choice1", choice1);
+      updateSelect("choice2", choice2);
+      updateSelect("choice3", choice3);
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h2>🎓 Student Admission Predictor</h2>
+    <form action="/predict/" method="post">
+      <label>Physics Marks (0–60):</label>
+      <input type="number" name="physics_marks" min="0" max="60" required>
+
+      <label>Math Marks (0–100):</label>
+      <input type="number" name="math_marks" min="0" max="100" required>
+
+      <label>English Marks (0–40):</label>
+      <input type="number" name="english_marks" min="0" max="40" required>
+
+      <label>Number of Attempts:</label>
+      <input type="number" name="number_of_attempts" min="1" required>
+
+      <label>Preferred Field:</label>
+      <select name="preferred_field" required>
+        <option value="">Select Field</option>
+        <option value="CS">CS</option>
+        <option value="Engineering">Engineering</option>
+        <option value="Business">Business</option>
+        <option value="Medicine">Medicine</option>
+      </select>
+
+      <label>1st University Choice:</label>
+      <select id="choice1" name="choice1" onchange="updateChoices()" required></select>
+
+      <label>2nd University Choice:</label>
+      <select id="choice2" name="choice2" onchange="updateChoices()" required></select>
+
+      <label>3rd University Choice:</label>
+      <select id="choice3" name="choice3" onchange="updateChoices()" required></select>
+
+      <button type="submit" class="btn">🔮 Predict</button>
+    </form>
+  </div>
+
+  <script>
+    // Initialize dropdowns on page load
+    window.onload = function() {
+      updateChoices();
+    }
+  </script>
+</body>
+</html>
